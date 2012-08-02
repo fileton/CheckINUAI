@@ -1,5 +1,7 @@
 package cl.uai.checkin;
 
+import java.util.concurrent.CountDownLatch;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -67,11 +69,29 @@ public class sql {
 		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, null, null, null, null, null);
 		String result = "";
 		
-		int iRow = c.getColumnIndex(KEY_ROWID);
+		int iId = c.getColumnIndex(KEY_ROWID);
 		int iName = c.getColumnIndex(KEY_NAME);
 		
 		for(c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
-			result = result + c.getString(iRow) + " " + c.getString(iName) + "\n";
+			result = result + c.getString(iId) + " " + c.getString(iName) + "\n";
+		}
+		c.close();
+		return result;
+	}
+	
+	public int[] getProfesoresId(){
+		String[] columns = new String[]{ KEY_ROWID, KEY_NAME};
+		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, null, null, null, null, null);
+
+		int[] result;
+		result = new int[c.getCount()];
+		
+		int iId = c.getColumnIndex(KEY_ROWID);
+		
+		int i = 0;
+		for(c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+			result[i]= c.getInt(iId);
+			i++;
 		}
 		c.close();
 		return result;

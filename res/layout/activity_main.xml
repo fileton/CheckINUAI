@@ -3,47 +3,54 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <Button
-        android:id="@+id/bGotoAdmin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:text="Admin" />
-
     <TextView
         android:id="@+id/textView1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:text="Id del profesor"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="10dp"
+        android:text="Escriba su Rut sin guion"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <EditText
         android:id="@+id/editText1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/textView1"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="10dp"
         android:ems="10"
-        android:inputType="number" />
+        android:inputType="number" >
+
+        <requestFocus />
+    </EditText>
 
     <Button
         android:id="@+id/button1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_below="@+id/editText1"
+        android:layout_marginTop="39dp"
+        android:layout_marginRight="10dp"
         android:text="Check In" />
-
-    <Button
-        android:id="@+id/bScan"
+    
+    <TextView
+        android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/textView1"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="32dp"
-        android:text="Scan" />
+        android:layout_marginTop="100dp"
+        android:layout_marginLeft="10dp"
+        android:text="O haga clic en su nombre"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+    
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="130dp"
+    android:id="@+id/tableLayout" >
+        
+    </LinearLayout>
 
 </RelativeLayout>

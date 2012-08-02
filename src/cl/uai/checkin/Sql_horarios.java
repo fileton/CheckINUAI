@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class Sql_horarios {
 	
@@ -84,6 +85,33 @@ public class Sql_horarios {
 		}
 		c.close();
 		return null;
+	}
+	
+	public int[] buscarHorarios(String Query){
+		String[] columns = new String[]{ KEY_ROWID, KEY_IDPROFE, KEY_NAME, KEY_HORA};
+		Cursor c = ourDatabase.query(DATABASE_TABLE, columns,
+				KEY_IDPROFE + " like " + "'%" + Query + "%'",
+				null, null, null, null, null);
+		
+		int iId = c.getColumnIndex(KEY_IDPROFE);
+		int iHora = c.getColumnIndex(KEY_HORA);
+		
+		int[] Ids;
+		Ids = new int[c.getCount()];
+		
+		int i = 0;
+		for(c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
+			if(compararHora(c.getString(iHora))){
+				Ids[i] = c.getInt(iId);
+				Log.i("Hola", c.getInt(iId)+ "");
+			}
+			else{
+				Ids[i] = 0;
+			}
+			i++;
+		}
+		c.close();
+		return Ids;
 	}
 	
 	public String getClase_id(String id_profe) {

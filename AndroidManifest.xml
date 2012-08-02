@@ -34,6 +34,17 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name=".CheckIn"
+            android:label="CheckIn" >
+            <intent-filter>
+                <action android:name="cl.uai.checkin.CHECKIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        
     </application>
 
 </manifest>

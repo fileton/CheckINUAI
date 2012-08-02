@@ -33,21 +33,36 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.CursorJoiner.Result;
+import android.graphics.Typeface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.ParseException;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
 	
+	private static final String[] String = null;
 	JSONArray jArray;
 	String result = null;
 	InputStream is = null;
@@ -60,9 +75,14 @@ public class MainActivity extends Activity {
 	String nombre_clase = null;
 	String hora_clase = null;
 	
+	boolean networkError;
+	
+	LinearLayout row;
+	
 	EditText idEdit;
 	ProgressBar spinner;
 	Button irAAdmin;
+	Button irAPaint;
 	
 	final Context context = this;
 	
@@ -78,12 +98,13 @@ public class MainActivity extends Activity {
 			.setCancelable(false)
 			.setPositiveButton("Si",new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog,int id) {
-					es();
+					//respuesta es si
 					dialog.cancel();
 				}
 			  })
 			.setNegativeButton("No",new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog,int id) {
+					//respuesta es no
 					dialog.cancel();
 				}
 			});
@@ -132,7 +153,6 @@ public class MainActivity extends Activity {
 
 	public void startVerificar(){
 		
-		
 		nombre = getNombre(id);
 		if(nombre == null)
 			{alert("0", "Error", "No se encontro al profesor");}
@@ -158,8 +178,14 @@ public class MainActivity extends Activity {
 				if(estado != null)
 				{alert("0", nombre, "La clase " + nombre_clase + " ya fue confirmada.");}
 				else{
-				mensaje = "ÀQuieres confirmar la asistencia a " + nombre_clase + " a las " + hora_clase + "?";
-				alert("1", nombre, mensaje);
+				//ir a confirmar la clase
+				Intent intent=new Intent("cl.uai.checkin.CHECKIN");
+				intent.putExtra("nombre",nombre);
+				intent.putExtra("nombre_clase",nombre_clase);
+				intent.putExtra("id_clase",id_clase);
+				intent.putExtra("id_profe",id);
+				intent.putExtra("hora_clase",hora_clase);
+				startActivity(intent);
 				}
 				
 			}
@@ -172,32 +198,21 @@ public class MainActivity extends Activity {
 		
 	}
 	
-	//funcion para cuando verificar esta bien
-		public void es(){
-			sql_checkins checkin = new sql_checkins(this);
-			checkin.open();
-			checkin.checkIn(id_clase);
-			checkin.close();
-			
-			alert("0", nombre, "Se ha confirmado la clase.");
-			
-			if(isOnline()){
-				new SubirClases().execute();
-			}
-		}
-	
     @Override
+	protected void onPostResume() {
+    	if(isOnline()){
+			new SubirClases().execute();
+		}
+		super.onPostResume();
+		configurarTabla();
+	}
+
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        readQr();
-        
         Button CheckInButton = (Button) findViewById(R.id.button1);
-        Button Scan = (Button) findViewById(R.id.bScan);
-        irAAdmin = (Button) findViewById(R.id.bGotoAdmin);
-        
-        //new sendClasesLoop().execute();
         
         //cuando hace click
 		CheckInButton.setOnClickListener(new View.OnClickListener() {
@@ -209,43 +224,114 @@ public class MainActivity extends Activity {
 		        startVerificar();
 		        
 			}
-		}); 
+		});  
 		
-		Scan.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View arg0) {
-				readQr();
-			}
-		});
 		
-		irAAdmin.setOnClickListener(new View.OnClickListener() {
-			
+		EditText TextView = (EditText)findViewById(R.id.editText1);
+		TextView.addTextChangedListener(new TextWatcher(){
 			@Override
-			public void onClick(View arg0) {
-				startActivity(new Intent("cl.uai.checkin.ADMIN"));
+			public void afterTextChanged(Editable arg0) {
+				configurarTabla();
 			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,int after) {}
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,int count) {}
 		});
     }
     
-    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
- 	   if (requestCode == 0) {
- 	      if (resultCode == RESULT_OK) {
- 	         String contents = intent.getStringExtra("SCAN_RESULT");
- 	         String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
- 	         	id= contents;
- 			    startVerificar();
- 	      } else if (resultCode == RESULT_CANCELED) {
- 	         
- 	      }
- 	   }
- 	}
-    
-    public void readQr(){
-    	Intent intent = new Intent("com.google.zxing.client.android.SCAN");
-		intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
-		startActivityForResult(intent, 0);
+    /* Creates the menu items */
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 1, 0, "Admin");
+        return true;
     }
+
+    /* Handles item selections */
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case 1:
+        	startActivity(new Intent("cl.uai.checkin.ADMIN"));
+            return true;
+        }
+        return false;
+    }
+    public boolean getEstadoPorIdProfesor(String id_profesor){
+    	
+    	Sql_horarios db = new Sql_horarios(this);
+		db.open();
+		id_clase = db.getClase_id(id_profesor);
+		if(id_clase == null)
+			{return true;}
+		db.close();
+		
+		sql_checkins sqlestado = new sql_checkins(this);
+		sqlestado.open();
+		String estado = sqlestado.getEstadoDeClase(id_clase);
+		sqlestado.close();
+		if(estado != null)
+		{return true;}
+    	return false;
+    }
+    
+   public void configurarTabla()
+   {
+	   LinearLayout layout = (LinearLayout) findViewById(R.id.tableLayout);
+	   layout.setOrientation(LinearLayout.VERTICAL);
+	   
+	   layout.removeAllViewsInLayout();
+
+	   Sql_horarios sql = new Sql_horarios(MainActivity.this);
+	   sql.open();
+	   EditText search = (EditText)findViewById(R.id.editText1);
+	   int[] profesoresId = sql.buscarHorarios(search.getText().toString());
+	   sql.close();
+	   
+	   String[] nombre;
+	   nombre = new String[profesoresId.length];
+	   
+	   Button[] btnTag;
+	   btnTag = new Button[profesoresId.length];
+	
+	   int i = 0;
+	   int j = 0;
+	   while(i < profesoresId.length) {
+		   if(j == 7)
+		   {break;}
+		   
+		   if(getEstadoPorIdProfesor(profesoresId[i] + "")){
+			   profesoresId[i] = 0;
+		   }
+		   
+		   if(profesoresId[i] != 0){
+		   
+	       row = new LinearLayout(this);
+	       btnTag[i] = new Button(this);
+	       btnTag[i].setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+	       
+	       sql sql2 = new sql(MainActivity.this);
+	       sql2.open();
+		   nombre[i] = sql2.getName(profesoresId[i]);
+		   sql2.close();
+	       btnTag[i].setText(nombre[i]);
+	       btnTag[i].setId(profesoresId[i]);
+	       
+	       btnTag[i].setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+		        id= Integer.toString(v.getId());
+		        startVerificar();
+			}
+	       });
+	       
+	       row.addView(btnTag[i]);
+	       layout.addView(row);
+	       
+	       j++;
+		   }
+	       i++;
+	   }
+   }
     
     
     class SubirClases extends AsyncTask<String, String, Void>
@@ -261,8 +347,10 @@ public class MainActivity extends Activity {
 	    	   sql.close();
 	    	   for(String id_clase: array){
 	    		   sql.open();
+	    		   networkError=false;
 	    		   subir_checkin(id_clase);
-	    		   sql.guardarSubida(id_clase);
+	    		   if(!networkError){
+	    		   sql.guardarSubida(id_clase);}
 	    		   sql.close();
 	    	   }
 	    	   
@@ -284,8 +372,8 @@ public class MainActivity extends Activity {
 				//Hace la petici—n         
 				httpClient.execute(httpPost);              
 			} 
-			catch (ClientProtocolException e) {} 
-			catch (IOException e) {} 
+			catch (ClientProtocolException e) {networkError=true;} 
+			catch (IOException e) {networkError=true;} 
 		}
 	 }
 }
