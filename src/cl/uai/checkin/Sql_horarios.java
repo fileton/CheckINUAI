@@ -17,6 +17,7 @@ public class Sql_horarios {
 	public static final String KEY_IDPROFE = "id_del_profesor";
 	public static final String KEY_NAME = "nombre";
 	public static final String KEY_HORA = "hora";
+	public static final String KEY_NAME_PROFESOR = "nombre_del_profesor";
 	
 	
 	public static final String DATABASE_NAME = "CheckInUai_Horarios_DB";
@@ -39,7 +40,8 @@ public class Sql_horarios {
 					KEY_ROWID + " INTEGER PRIMARY KEY, " +
 					KEY_IDPROFE + " TEXT NOT NULL, " +
 					KEY_NAME + " TEXT NOT NULL, "+
-					KEY_HORA + " TEXT NOT NULL);"
+					KEY_HORA + " TEXT NOT NULL, "+
+					KEY_NAME_PROFESOR + " TEXT NOT NULL);"
 					);
 		}
 
@@ -65,12 +67,13 @@ public class Sql_horarios {
 		ourHelper.close();
 	}
 
-	public long creatyEntry(int id, String id_profe, String nombre, String hora) {
+	public long creatyEntry(int id, String id_profe, String nombre, String hora, String nombre_profe) {
 		ContentValues cv = new ContentValues();
 		cv.put(KEY_ROWID, id);
 		cv.put(KEY_IDPROFE, id_profe);
 		cv.put(KEY_NAME, nombre);
 		cv.put(KEY_HORA, hora);
+		cv.put(KEY_NAME_PROFESOR, nombre_profe);
 		return ourDatabase.insert(DATABASE_TABLE, null, cv);
 	}
 	
@@ -90,10 +93,11 @@ public class Sql_horarios {
 	public int[] buscarHorarios(String Query){
 		String[] columns = new String[]{ KEY_ROWID, KEY_IDPROFE, KEY_NAME, KEY_HORA};
 		Cursor c = ourDatabase.query(DATABASE_TABLE, columns,
-				KEY_IDPROFE + " like " + "'%" + Query + "%'",
+				KEY_IDPROFE + " like " + "'%" + Query + "%' " +
+				" OR " + KEY_NAME_PROFESOR + " like " + "'%" + Query + "%' ",
 				null, null, null, null, null);
 		
-		int iId = c.getColumnIndex(KEY_IDPROFE);
+		int iId = c.getColumnIndex(KEY_ROWID);
 		int iHora = c.getColumnIndex(KEY_HORA);
 		
 		int[] Ids;
@@ -114,22 +118,6 @@ public class Sql_horarios {
 		return Ids;
 	}
 	
-	public String getClase_id(String id_profe) {
-		String[] columns = new String[]{ KEY_ROWID, KEY_IDPROFE, KEY_HORA};
-		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, KEY_IDPROFE + "=" + id_profe, null, null, null, null);
-		String result = null;
-		
-		int iRow = c.getColumnIndex(KEY_ROWID);
-		int iHora = c.getColumnIndex(KEY_HORA);
-		
-		for(c.moveToFirst(); !c.isAfterLast(); c.moveToNext()){
-			if(compararHora(c.getString(iHora)))
-				{result = c.getString(iRow);}
-		}
-		c.close();
-		return result;
-	}
-	
 	public String getNombreDeClase(String l){
 		String[] columns = new String[]{ KEY_ROWID, KEY_NAME};
 		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, KEY_ROWID + "=" + l, null, null, null, null, null);
@@ -142,6 +130,20 @@ public class Sql_horarios {
 		c.close();
 		return null;
 	}
+	
+	public String getNombreProfesor(String l){
+		String[] columns = new String[]{ KEY_ROWID, KEY_NAME_PROFESOR};
+		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, KEY_ROWID + "=" + l, null, null, null, null, null);
+		if(c != null && !c.isAfterLast()){
+			c.moveToFirst();
+			String name = c.getString(1);
+			c.close();
+			return name;
+		}
+		c.close();
+		return null;
+	}
+	
 	public String getHoraDeClase(String l){
 		String[] columns = new String[]{ KEY_ROWID, KEY_HORA};
 		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, KEY_ROWID + "=" + l, null, null, null, null, null);
@@ -152,7 +154,8 @@ public class Sql_horarios {
 			SimpleDateFormat formato2;
 			java.util.Date horario;
 			String retu = null;
-			formato1 = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+			formato1 = new SimpleDateFormat("" +
+					"");
 			formato2 = new SimpleDateFormat("hh:mm a");
 			
 			try {
@@ -199,19 +202,6 @@ public class Sql_horarios {
 		
 		}
 		catch (java.text.ParseException e) {return false;}
-	}
-	
-	public String getClase(long id){
-		String[] columns = new String[]{ KEY_ROWID, KEY_IDPROFE};
-		Cursor c = ourDatabase.query(DATABASE_TABLE, columns, KEY_IDPROFE + "=" + id, null, null, null, null, null);
-		if(c != null && !c.isAfterLast()){
-			c.moveToFirst();
-			String id_clase = c.getString(0);
-			c.close();
-			return id_clase;
-		}
-		c.close();
-		return null;
 	}
 	
 	public void deleteDatabase(){

@@ -69,102 +69,6 @@ public class Admin extends Activity {
 	    InputStream is = null ;
 	    String result = "";
 	    protected void onPreExecute() {
-	       progressDialog.setMessage("Descargando Profesores...");
-	       progressDialog.show();
-	     }
-	       @Override
-		protected Void doInBackground(String... params) {
-		  String url_select = "http://lopezjullian.com/checkinuai/descargar_profesores.php";
-
-		  HttpClient httpClient = new DefaultHttpClient();
-		  HttpPost httpPost = new HttpPost(url_select);
-
-	          ArrayList<NameValuePair> param = new ArrayList<NameValuePair>();
-
-		    try {
-			httpPost.setEntity(new UrlEncodedFormEntity(param));
-
-			HttpResponse httpResponse = httpClient.execute(httpPost);
-			HttpEntity httpEntity = httpResponse.getEntity();
-
-			//read content
-			is =  httpEntity.getContent();					
-
-			} catch (Exception e) {
-			Log.e("log_tag", "Error in http connection "+e.toString());
-			}
-		try {
-		    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			StringBuilder sb = new StringBuilder();
-			String line = "";
-			while((line=br.readLine())!=null)
-			{
-			   sb.append(line+"\n");
-			}
-				is.close();
-				result=sb.toString();				
-
-					} catch (Exception e) {
-						// TODO: handle exception
-						Log.e("log_tag", "Error converting result "+e.toString());
-					}
-
-				return null;
-
-			}
-		protected void onPostExecute(Void v) {
-
-			// ambil data dari Json database
-			try {
-				sql delete = new sql(Admin.this);
-				delete.open();
-				delete.deleteDatabase();
-				delete.close();
-				
-				JSONArray Jarray = new JSONArray(result);
-				for(int i=0;i<Jarray.length();i++)
-				{
-				JSONObject Jasonobject = null;
-				Jasonobject = Jarray.getJSONObject(i);
-
-				//get an output on the screen
-				int id = Jasonobject.getInt("id");
-				String name = Jasonobject.getString("nombre");
-				
-				//guardar al sql
-				boolean didItWork = true;
-				try{
-				
-				sql entry = new sql(Admin.this);
-				entry.open();
-				entry.creatyEntry(id, name);
-				entry.close();
-				}catch (Exception e){
-					didItWork = false;
-				}finally{
-					if(didItWork){
-						
-					}
-				}
-				//se termina de guardar
-				
-				}
-				this.progressDialog.dismiss();
-				new GuardarDatos2().execute();
-
-			} catch (Exception e) {
-				// TODO: handle exception
-				Log.e("log_tag", "Error parsing data "+e.toString());
-			}
-		}
-	    }
-	
-	class GuardarDatos2 extends AsyncTask<String, String, Void>
-	{
-	private ProgressDialog progressDialog = new ProgressDialog(Admin.this);
-	    InputStream is = null ;
-	    String result = "";
-	    protected void onPreExecute() {
 	       progressDialog.setMessage("Descargando Clases...");
 	       progressDialog.show();
 	     }
@@ -228,6 +132,7 @@ public class Admin extends Activity {
 				String id_profe = Jasonobject.getString("id_profe");
 				String nombre = Jasonobject.getString("nombre");
 				String hora = Jasonobject.getString("hora");
+				String nombre_profe = Jasonobject.getString("nombre_profe");
 				
 				//guardar al sql
 				boolean didItWork = true;
@@ -235,7 +140,7 @@ public class Admin extends Activity {
 				
 				Sql_horarios entry = new Sql_horarios(Admin.this);
 				entry.open();
-				entry.creatyEntry(id, id_profe, nombre, hora);
+				entry.creatyEntry(id, id_profe, nombre, hora, nombre_profe);
 				entry.close();
 				}catch (Exception e){
 					didItWork = false;

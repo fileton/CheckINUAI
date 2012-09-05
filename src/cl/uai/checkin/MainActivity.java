@@ -136,41 +136,19 @@ public class MainActivity extends Activity{
 		} 
 	}
 	
-	private String getNombre(String id2) {
-		long l = 0;
-		try {
-	         l = Long.parseLong(id2);
-	      } catch (NumberFormatException nfe) {
-	      }
-		sql nombre = new sql(this);
-		nombre.open();
-		String returned = nombre.getName(l);
-		nombre.close();
-		
-		return returned;
-	}
-	
 
 	public void startVerificar(){
 		
-		nombre = getNombre(id);
-		if(nombre == null)
-			{alert("0", "Error", "No se encontro al profesor");}
-		else{
 			String mensaje = null;
 			
 			Sql_horarios db = new Sql_horarios(this);
 			db.open();
-			id_clase = db.getClase_id(id);
 			if(id_clase!=null)
 				{
 					nombre_clase = db.getNombreDeClase(id_clase);
 					hora_clase = db.getHoraDeClase(id_clase);
 				}
 			db.close();
-			
-			if(id_clase!=null)
-			{
 				sql_checkins sqlestado = new sql_checkins(this);
 				sqlestado.open();
 				String estado = sqlestado.getEstadoDeClase(id_clase);
@@ -187,15 +165,6 @@ public class MainActivity extends Activity{
 				intent.putExtra("hora_clase",hora_clase);
 				startActivity(intent);
 				}
-				
-			}
-			else
-			{mensaje = "No tienes clases ahora.";
-			alert("0", nombre, mensaje);}
-			
-			
-		}
-		
 	}
 	
     @Override
@@ -212,20 +181,15 @@ public class MainActivity extends Activity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         
-        Button CheckInButton = (Button) findViewById(R.id.button1);
-        
-        //cuando hace click
-		CheckInButton.setOnClickListener(new View.OnClickListener() {
+        Button ActualizarButton = (Button) findViewById(R.id.bActualizar);
+		
+		ActualizarButton.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				idEdit = (EditText)findViewById(R.id.editText1);
-		        id= idEdit.getText().toString();
-		        startVerificar();
-		        
+				actualizarDatos();
 			}
 		});  
-		
 		
 		EditText TextView = (EditText)findViewById(R.id.editText1);
 		TextView.addTextChangedListener(new TextWatcher(){
@@ -241,30 +205,7 @@ public class MainActivity extends Activity{
 		});
     }
     
-    /* Creates the menu items */
-    public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 1, 0, "Admin");
-        return true;
-    }
-
-    /* Handles item selections */
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        case 1:
-        	startActivity(new Intent("cl.uai.checkin.ADMIN"));
-            return true;
-        }
-        return false;
-    }
-    public boolean getEstadoPorIdProfesor(String id_profesor){
-    	
-    	Sql_horarios db = new Sql_horarios(this);
-		db.open();
-		id_clase = db.getClase_id(id_profesor);
-		if(id_clase == null)
-			{return true;}
-		db.close();
-		
+    public boolean getEstadoPorIdProfesor(String id_clase){
 		sql_checkins sqlestado = new sql_checkins(this);
 		sqlestado.open();
 		String estado = sqlestado.getEstadoDeClase(id_clase);
@@ -284,43 +225,50 @@ public class MainActivity extends Activity{
 	   Sql_horarios sql = new Sql_horarios(MainActivity.this);
 	   sql.open();
 	   EditText search = (EditText)findViewById(R.id.editText1);
-	   int[] profesoresId = sql.buscarHorarios(search.getText().toString());
+	   int[] clasesId = sql.buscarHorarios(search.getText().toString());
 	   sql.close();
 	   
 	   String[] nombre;
-	   nombre = new String[profesoresId.length];
+	   nombre = new String[clasesId.length];
+	   
+	   String[] nombreProfesor;
+	   nombreProfesor = new String[clasesId.length];
 	   
 	   Button[] btnTag;
-	   btnTag = new Button[profesoresId.length];
+	   btnTag = new Button[clasesId.length];
 	
 	   int i = 0;
 	   int j = 0;
-	   while(i < profesoresId.length) {
-		   if(j == 7)
+	   while(i < clasesId.length) {
+		   if(j == 8)
 		   {break;}
 		   
-		   if(getEstadoPorIdProfesor(profesoresId[i] + "")){
-			   profesoresId[i] = 0;
+		   if(getEstadoPorIdProfesor(clasesId[i] + "")){
+			   clasesId[i] = 0;
 		   }
 		   
-		   if(profesoresId[i] != 0){
+		   if(clasesId[i] != 0){
 		   
 	       row = new LinearLayout(this);
 	       btnTag[i] = new Button(this);
 	       btnTag[i].setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
 	       
-	       sql sql2 = new sql(MainActivity.this);
-	       sql2.open();
-		   nombre[i] = sql2.getName(profesoresId[i]);
-		   sql2.close();
-	       btnTag[i].setText(nombre[i]);
-	       btnTag[i].setId(profesoresId[i]);
+	       sql = new Sql_horarios(MainActivity.this);
+		   sql.open();
+		   nombre[i] = sql.getNombreDeClase(clasesId[i] + "");
+		   nombreProfesor[i] = sql.getNombreProfesor(clasesId[i] + "");
+		   sql.close();
+	       btnTag[i].setText(nombre[i] + " - " + nombreProfesor[i]);
+	       btnTag[i].setTextSize(20);
+	       btnTag[i].setId(clasesId[i]);
 	       
 	       btnTag[i].setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-		        id= Integer.toString(v.getId());
+				id_clase = Integer.toString(v.getId());
 		        startVerificar();
+		        EditText search = (EditText)findViewById(R.id.editText1);
+				search.setText("");
 			}
 	       });
 	       
@@ -336,7 +284,6 @@ public class MainActivity extends Activity{
     
     class SubirClases extends AsyncTask<String, String, Void>
 	{
-	private ProgressDialog progressDialog = new ProgressDialog(MainActivity.this);
 	    protected void onPreExecute() {
 	     }
 	       @Override
@@ -365,15 +312,116 @@ public class MainActivity extends Activity{
 			try {         
 				//A–ade las variables a enviar por post         
 				List<NameValuePair> postValues = new ArrayList<NameValuePair>(1);         
-				postValues.add(new BasicNameValuePair("id", id_clase));             
+				postValues.add(new BasicNameValuePair("id_clase", id_clase));             
 		 
 				httpPost.setEntity(new UrlEncodedFormEntity(postValues));          
 		 
 				//Hace la petici—n         
-				httpClient.execute(httpPost);              
+				httpClient.execute(httpPost);
 			} 
 			catch (ClientProtocolException e) {networkError=true;} 
 			catch (IOException e) {networkError=true;} 
 		}
 	 }
+    
+    
+    //actualizar datos
+    public void actualizarDatos(){
+	    new GuardarDatos().execute();
+    }
+    
+    class GuardarDatos extends AsyncTask<String, String, Void>
+	{
+	    InputStream is = null ;
+	    String result = "";
+	    protected void onPreExecute() {
+	       
+	     }
+	       @Override
+		protected Void doInBackground(String... params) {
+		  String url_select = "http://lopezjullian.com/checkinuai/descargar_clases.php";
+
+		  HttpClient httpClient = new DefaultHttpClient();
+		  HttpPost httpPost = new HttpPost(url_select);
+
+	          ArrayList<NameValuePair> param = new ArrayList<NameValuePair>();
+
+		    try {
+			httpPost.setEntity(new UrlEncodedFormEntity(param));
+
+			HttpResponse httpResponse = httpClient.execute(httpPost);
+			HttpEntity httpEntity = httpResponse.getEntity();
+
+			//read content
+			is =  httpEntity.getContent();					
+
+			} catch (Exception e) {
+			Log.e("log_tag", "Error in http connection "+e.toString());
+			}
+		try {
+		    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+			StringBuilder sb = new StringBuilder();
+			String line = "";
+			while((line=br.readLine())!=null)
+			{
+			   sb.append(line+"\n");
+			}
+				is.close();
+				result=sb.toString();				
+
+					} catch (Exception e) {
+						Log.e("log_tag", "Error converting result "+e.toString());
+					}
+			
+		// ambil data dari Json database
+					try {
+						Sql_horarios delete = new Sql_horarios(MainActivity.this);
+						delete.open();
+						delete.deleteDatabase();
+						delete.close();
+						
+						JSONArray Jarray = new JSONArray(result);
+						for(int i=0;i<Jarray.length();i++)
+						{
+						JSONObject Jasonobject = null;
+						Jasonobject = Jarray.getJSONObject(i);
+
+						//get an output on the screen
+						int id = Jasonobject.getInt("ramo_id");
+						String id_profe = Jasonobject.getString("profesor_rut");
+						String nombre = Jasonobject.getString("ramo_nombre");
+						String hora = Jasonobject.getString("modulo_hora_inicio");
+						String nombre_profe = Jasonobject.getString("profesor_nombre");
+						
+						//guardar al sql
+						boolean didItWork = true;
+						try{
+						
+						Sql_horarios entry = new Sql_horarios(MainActivity.this);
+						entry.open();
+						entry.creatyEntry(id, id_profe, nombre, hora, nombre_profe);
+						Log.e("Clase Guardada", id + " " + nombre + " " + hora + " " + nombre_profe);
+						entry.close();
+						}catch (Exception e){
+							didItWork = false;
+						}finally{
+							if(didItWork){
+								
+							}
+						}
+						//se termina de guardar
+						
+						}
+					} catch (Exception e) {
+						Log.e("log_tag", "Error parsing data "+e.toString());
+					}
+		
+		
+				return null;
+
+			}
+		protected void onPostExecute(Void v) {
+			configurarTabla();
+		}
+	  }
 }
